@@ -14,9 +14,9 @@ const app = express();
 // Security middleware
 app.use(helmet());
 
-// CORS configuration
+// CORS configuration - Allow all origins for now (update in production)
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: true, // Allow all origins (you can restrict this later)
   credentials: true,
   optionsSuccessStatus: 200
 };
