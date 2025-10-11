@@ -35,17 +35,8 @@ const ContactSchema = new mongoose.Schema({
   budgetRange: {
     type: String,
     required: [true, 'Please select a budget range'],
-    enum: {
-      values: [
-        'Less than $5,000',
-        '$5,000 - $10,000',
-        '$10,000 - $25,000',
-        '$25,000 - $50,000',
-        '$50,000 - $100,000',
-        'More than $100,000'
-      ],
-      message: 'Please select a valid budget range'
-    }
+    trim: true
+    // Removed enum validation to accept any budget range from frontend
   },
   projectDetails: {
     type: String,

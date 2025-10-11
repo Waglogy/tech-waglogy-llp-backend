@@ -44,15 +44,8 @@ const contactValidation = [
   body('budgetRange')
     .notEmpty()
     .withMessage('Budget range is required')
-    .isIn([
-      'Less than $5,000',
-      '$5,000 - $10,000',
-      '$10,000 - $25,000',
-      '$25,000 - $50,000',
-      '$50,000 - $100,000',
-      'More than $100,000'
-    ])
-    .withMessage('Please select a valid budget range'),
+    .trim(),
+    // Removed enum validation - accepts any budget range format
   
   body('projectDetails')
     .trim()
