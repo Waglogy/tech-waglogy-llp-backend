@@ -23,7 +23,11 @@ tech-waglogy-llp-backend/
 │   │   └── database.js  # MongoDB connection
 │   ├── controllers/     # Route controllers
 │   │   ├── authController.js
-│   │   └── exampleController.js
+│   │   ├── blogController.js
+│   │   ├── clientController.js
+│   │   ├── contactController.js
+│   │   ├── paymentController.js
+│   │   └── queryController.js
 │   ├── middleware/      # Custom middleware
 │   │   ├── auth.js      # Authentication & authorization
 │   │   ├── errorHandler.js
@@ -31,16 +35,28 @@ tech-waglogy-llp-backend/
 │   │   └── asyncHandler.js
 │   ├── models/          # Mongoose models
 │   │   ├── User.js
-│   │   └── Example.js
+│   │   ├── Blog.js
+│   │   ├── Client.js
+│   │   ├── Contact.js
+│   │   ├── Payment.js
+│   │   └── Query.js
 │   ├── routes/          # Route definitions
 │   │   ├── index.js
 │   │   ├── authRoutes.js
-│   │   └── exampleRoutes.js
+│   │   ├── blogRoutes.js
+│   │   ├── clientRoutes.js
+│   │   ├── contactRoutes.js
+│   │   ├── paymentRoutes.js
+│   │   └── queryRoutes.js
 │   ├── utils/           # Utility functions
 │   │   ├── ApiResponse.js
 │   │   └── logger.js
 │   ├── app.js           # Express app setup
 │   └── server.js        # Server entry point
+├── API_ENDPOINTS.md     # General API documentation
+├── BLOG_API.md          # Blog API documentation
+├── CLIENT_API.md        # Client API documentation
+├── PAYMENT_API.md       # Payment API documentation
 ├── .env.example         # Environment variables example
 ├── .eslintrc.json       # ESLint configuration
 ├── .gitignore
@@ -114,6 +130,21 @@ The server should now be running on `http://localhost:5000`
 | POST | `/api/v1/auth/logout` | Logout user | Private |
 | PUT | `/api/v1/auth/updatedetails` | Update user details | Private |
 | PUT | `/api/v1/auth/updatepassword` | Update password | Private |
+
+### Blogs
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/api/v1/blogs` | Get all published blogs | Public |
+| GET | `/api/v1/blogs/:id` | Get single blog by ID | Public |
+| GET | `/api/v1/blogs/slug/:slug` | Get single blog by slug | Public |
+| POST | `/api/v1/blogs` | Create new blog | Private |
+| PUT | `/api/v1/blogs/:id` | Update blog | Private |
+| DELETE | `/api/v1/blogs/:id` | Delete blog | Private |
+| PATCH | `/api/v1/blogs/:id/publish` | Toggle publish status | Private |
+| GET | `/api/v1/blogs/stats/summary` | Get blog statistics | Private |
+
+**📖 For detailed Blog API documentation, see [BLOG_API.md](./BLOG_API.md)**
 
 ### Health Check
 

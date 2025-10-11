@@ -7,6 +7,7 @@ const queryRoutes = require('./queryRoutes');
 const contactRoutes = require('./contactRoutes');
 const paymentRoutes = require('./paymentRoutes');
 const clientRoutes = require('./clientRoutes');
+const blogRoutes = require('./blogRoutes');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -14,6 +15,7 @@ router.use('/queries', queryRoutes);
 router.use('/contacts', contactRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/clients', clientRoutes);
+router.use('/blogs', blogRoutes);
 
 module.exports = router;
 
