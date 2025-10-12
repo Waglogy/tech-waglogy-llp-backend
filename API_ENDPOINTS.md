@@ -359,5 +359,218 @@ For complete **Client Management API documentation**, see **[CLIENT_API.md](CLIE
 
 ---
 
+## 📝 Blog Management (Rich Text Editor Support)
+
+### POST - Create Blog
+```
+POST /api/v1/blogs
+```
+**Headers:**
+```
+Authorization: Bearer <your_jwt_token>
+```
+**Body:**
+```json
+{
+  "title": "Getting Started with React in 2025",
+  "content": "<h2>Introduction</h2><p>React is a powerful JavaScript library...</p>",
+  "excerpt": "Learn the basics of React development in this comprehensive guide",
+  "contentType": "html",
+  "author": "John Doe",
+  "image": "https://example.com/images/react-guide.jpg",
+  "tags": ["react", "javascript", "web development"],
+  "isPublished": true,
+  "date": "2025-01-15T00:00:00.000Z"
+}
+```
+
+**Required Fields:**
+- `title` (String, max 200 chars)
+- `content` (String, HTML/Markdown/Text)
+
+**Optional Fields:**
+- `excerpt` (String, max 500 chars) - Auto-generated from content if not provided
+- `contentType` (String: 'html', 'markdown', 'text') - Default: 'html'
+- `author` (String, max 100 chars)
+- `image` (String, URL)
+- `tags` (Array of strings)
+- `isPublished` (Boolean) - Default: true
+- `date` (ISO 8601 Date) - Default: current date
+
+**Auto-generated Fields:**
+- `slug` - Auto-generated from title
+- `readTime` - Auto-calculated from content (words ÷ 200 words/min)
+- `views` - Default: 0
+- `createdBy` - Set from authenticated user
+
+### GET - Get All Blogs
+```
+GET /api/v1/blogs
+GET /api/v1/blogs?page=1&limit=10&isPublished=true
+GET /api/v1/blogs?search=react&sort=-date
+GET /api/v1/blogs?fields=title,excerpt,slug,date,author
+```
+
+**Query Parameters:**
+- `page` (Number) - Page number (default: 1)
+- `limit` (Number) - Items per page (default: 10)
+- `isPublished` (Boolean) - Filter by publish status
+- `search` (String) - Search in title, excerpt, and tags
+- `sort` (String) - Sort by field(s), use `-` for descending (e.g., `-date,title`)
+- `fields` (String) - Select specific fields (comma-separated)
+
+**Note:** Non-authenticated users only see published blogs.
+
+**Response:**
+```json
+{
+  "status": "success",
+  "count": 10,
+  "total": 45,
+  "totalPages": 5,
+  "currentPage": 1,
+  "data": [
+    {
+      "_id": "65abc123def456...",
+      "title": "Getting Started with React in 2025",
+      "excerpt": "Learn the basics of React development...",
+      "content": "<h2>Introduction</h2><p>React is a powerful...",
+      "contentType": "html",
+      "slug": "getting-started-with-react-in-2025",
+      "author": "John Doe",
+      "image": "https://example.com/images/react-guide.jpg",
+      "tags": ["react", "javascript", "web development"],
+      "date": "2025-01-15T00:00:00.000Z",
+      "isPublished": true,
+      "views": 150,
+      "readTime": 5,
+      "createdBy": {
+        "_id": "64abc123def456...",
+        "name": "Admin User",
+        "email": "admin@waglogy.com"
+      },
+      "createdAt": "2025-01-15T10:30:00.000Z",
+      "updatedAt": "2025-01-20T14:20:00.000Z"
+    }
+  ]
+}
+```
+
+### GET - Get Single Blog by ID
+```
+GET /api/v1/blogs/:id
+```
+**Note:** Increments view count automatically. Non-authenticated users can only view published blogs.
+
+### GET - Get Single Blog by Slug
+```
+GET /api/v1/blogs/slug/:slug
+```
+**Example:**
+```
+GET /api/v1/blogs/slug/getting-started-with-react-in-2025
+```
+**Note:** Increments view count automatically. Non-authenticated users can only view published blogs.
+
+### PUT - Update Blog
+```
+PUT /api/v1/blogs/:id
+```
+**Headers:**
+```
+Authorization: Bearer <your_jwt_token>
+```
+**Body:** (All fields optional)
+```json
+{
+  "title": "Updated Title",
+  "content": "<h2>Updated Content</h2><p>New content here...</p>",
+  "excerpt": "Updated excerpt",
+  "isPublished": false
+}
+```
+
+### DELETE - Delete Blog
+```
+DELETE /api/v1/blogs/:id
+```
+**Headers:**
+```
+Authorization: Bearer <your_jwt_token>
+```
+
+### PATCH - Toggle Publish Status
+```
+PATCH /api/v1/blogs/:id/publish
+```
+**Headers:**
+```
+Authorization: Bearer <your_jwt_token>
+```
+**Note:** Toggles between published and unpublished state.
+
+### GET - Get Blog Statistics
+```
+GET /api/v1/blogs/stats/summary
+```
+**Headers:**
+```
+Authorization: Bearer <your_jwt_token>
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "data": {
+    "overview": {
+      "totalBlogs": 45,
+      "publishedBlogs": 38,
+      "draftBlogs": 7,
+      "totalViews": 12500
+    },
+    "mostViewed": [
+      {
+        "_id": "65abc123def456...",
+        "title": "Getting Started with React",
+        "views": 1500,
+        "date": "2025-01-15T00:00:00.000Z",
+        "isPublished": true
+      }
+    ],
+    "recentBlogs": [
+      {
+        "_id": "65xyz789abc123...",
+        "title": "Latest Blog Post",
+        "date": "2025-02-01T00:00:00.000Z",
+        "isPublished": true,
+        "views": 50
+      }
+    ],
+    "blogsByTag": [
+      {
+        "_id": "react",
+        "count": 15
+      },
+      {
+        "_id": "javascript",
+        "count": 12
+      }
+    ]
+  }
+}
+```
+
+**⚠️ Note:** Create, Update, Delete, and Stats endpoints require **admin authentication**. 
+Get endpoints are public for published blogs.
+
+**💡 Rich Text Editor Integration:**
+- The `content` field accepts HTML from rich text editors like Quill, TinyMCE, Draft.js, etc.
+- Set `contentType` to 'html' for HTML content, 'markdown' for Markdown, or 'text' for plain text
+- The `excerpt` is auto-generated from content if not provided
+- `readTime` is automatically calculated based on word count (200 words/minute)
+
+---
+
 For detailed documentation, see **POSTMAN_API.md**
 

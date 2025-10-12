@@ -23,10 +23,18 @@ const createBlogValidation = [
     .withMessage('Title is required')
     .isLength({ max: 200 })
     .withMessage('Title cannot exceed 200 characters'),
-  body('description')
-    .trim()
+  body('content')
     .notEmpty()
-    .withMessage('Description is required'),
+    .withMessage('Content is required'),
+  body('excerpt')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Excerpt cannot exceed 500 characters'),
+  body('contentType')
+    .optional()
+    .isIn(['html', 'markdown', 'text'])
+    .withMessage('Content type must be html, markdown, or text'),
   body('date')
     .optional()
     .isISO8601()
@@ -59,11 +67,19 @@ const updateBlogValidation = [
     .withMessage('Title cannot be empty')
     .isLength({ max: 200 })
     .withMessage('Title cannot exceed 200 characters'),
-  body('description')
+  body('content')
+    .optional()
+    .notEmpty()
+    .withMessage('Content cannot be empty'),
+  body('excerpt')
     .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Description cannot be empty'),
+    .isLength({ max: 500 })
+    .withMessage('Excerpt cannot exceed 500 characters'),
+  body('contentType')
+    .optional()
+    .isIn(['html', 'markdown', 'text'])
+    .withMessage('Content type must be html, markdown, or text'),
   body('date')
     .optional()
     .isISO8601()

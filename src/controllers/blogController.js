@@ -47,7 +47,7 @@ exports.getAllBlogs = asyncHandler(async (req, res) => {
         {
           $or: [
             { title: { $regex: req.query.search, $options: 'i' } },
-            { description: { $regex: req.query.search, $options: 'i' } },
+            { excerpt: { $regex: req.query.search, $options: 'i' } },
             { tags: { $regex: req.query.search, $options: 'i' } }
           ]
         }
@@ -86,7 +86,7 @@ exports.getAllBlogs = asyncHandler(async (req, res) => {
             {
               $or: [
                 { title: { $regex: req.query.search, $options: 'i' } },
-                { description: { $regex: req.query.search, $options: 'i' } },
+                { excerpt: { $regex: req.query.search, $options: 'i' } },
                 { tags: { $regex: req.query.search, $options: 'i' } }
               ]
             }
