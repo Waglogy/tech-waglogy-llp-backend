@@ -8,6 +8,7 @@ const contactRoutes = require('./contactRoutes');
 const paymentRoutes = require('./paymentRoutes');
 const clientRoutes = require('./clientRoutes');
 const blogRoutes = require('./blogRoutes');
+const himtoWaitlistRoutes = require('./himtoWaitlistRoutes');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -16,6 +17,7 @@ router.use('/contacts', contactRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/clients', clientRoutes);
 router.use('/blogs', blogRoutes);
+router.use('/himto-waitlist', himtoWaitlistRoutes);
 
 module.exports = router;
 
