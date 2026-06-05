@@ -1,9 +1,10 @@
-const app = require('./app');
-const connectDB = require('./config/database');
 const dotenv = require('dotenv');
 
-// Load environment variables
+// Load environment variables BEFORE importing app (which loads cloudinary config)
 dotenv.config();
+
+const app = require('./app');
+const connectDB = require('./config/database');
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
