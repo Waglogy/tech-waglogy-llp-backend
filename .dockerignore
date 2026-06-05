@@ -1,0 +1,8 @@
+node_modules
+.env
+.git
+__tests__
+jest.config.js
+nodemon.json
+*.md
+.github

@@ -1,0 +1,95 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ARM64 image and export
+        run: |
+          docker buildx build \
+            --platform linux/arm64 \
+            --tag waglogy-backend:latest \
+            --output type=docker,dest=waglogy-backend.tar \
+            .
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Transfer image to Oracle server
+        run: |
+          scp waglogy-backend.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/waglogy-backend.tar
+
+      - name: Write .env file on server
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            mkdir -p /root/waglogy-backend
+            cat > /root/waglogy-backend/.env << 'ENVFILE'
+          PORT=${{ secrets.PORT }}
+          NODE_ENV=${{ secrets.NODE_ENV }}
+          MONGODB_URI=${{ secrets.MONGODB_URI }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_EXPIRE=${{ secrets.JWT_EXPIRE }}
+          JWT_COOKIE_EXPIRE=${{ secrets.JWT_COOKIE_EXPIRE }}
+          CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+          RATE_LIMIT_WINDOW_MS=${{ secrets.RATE_LIMIT_WINDOW_MS }}
+          RATE_LIMIT_MAX_REQUESTS=${{ secrets.RATE_LIMIT_MAX_REQUESTS }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL=${{ secrets.GEMINI_MODEL }}
+          GMAIL_USER=${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD=${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_FROM_NAME=${{ secrets.GMAIL_FROM_NAME }}
+          GMAIL_BCC=${{ secrets.GMAIL_BCC }}
+          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+          ENVFILE
+          EOF
+
+      - name: Deploy on Oracle ARM server
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            docker load -i /tmp/waglogy-backend.tar
+            docker stop waglogy-backend || true
+            docker rm waglogy-backend || true
+            docker run -d \
+              --name waglogy-backend \
+              --network waglogy-net \
+              --restart unless-stopped \
+              --env-file /root/waglogy-backend/.env \
+              -p 8080:8080 \
+              waglogy-backend:latest
+            rm /tmp/waglogy-backend.tar
+          EOF
