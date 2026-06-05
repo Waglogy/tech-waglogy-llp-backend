@@ -55,8 +55,8 @@ jobs:
       - name: Write .env file on server
         run: |
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-            mkdir -p /root/waglogy-backend
-            cat > /root/waglogy-backend/.env << 'ENVFILE'
+            mkdir -p /nigga/waglogy-backend
+            cat > /nigga/waglogy-backend/.env << 'ENVFILE'
           PORT=${{ secrets.PORT }}
           NODE_ENV=${{ secrets.NODE_ENV }}
           MONGODB_URI=${{ secrets.MONGODB_URI }}
@@ -88,7 +88,7 @@ jobs:
               --name waglogy-backend \
               --network waglogy-net \
               --restart unless-stopped \
-              --env-file /root/waglogy-backend/.env \
+              --env-file /nigga/waglogy-backend/.env \
               -p 8080:8080 \
               waglogy-backend:latest
             rm /tmp/waglogy-backend.tar
