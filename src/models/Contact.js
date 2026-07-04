@@ -13,30 +13,27 @@ const ContactSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
     match: [
-      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
       'Please provide a valid email address'
     ]
   },
   phone: {
     type: String,
-    required: [true, 'Please provide your phone number'],
     trim: true,
     match: [
-      /^[\d\s\+\-\(\)]+$/,
+      /^[\d\s+\-()]+$/,
       'Please provide a valid phone number'
     ]
   },
   organizationName: {
     type: String,
-    required: [true, 'Please provide your organization name'],
     trim: true,
     maxlength: [200, 'Organization name cannot be more than 200 characters']
   },
   budgetRange: {
     type: String,
-    required: [true, 'Please select a budget range'],
     trim: true
-    // Removed enum validation to accept any budget range from frontend
+    // Optional — accepts any budget range from frontend
   },
   projectDetails: {
     type: String,

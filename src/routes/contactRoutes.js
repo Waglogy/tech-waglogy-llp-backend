@@ -4,10 +4,12 @@ const {
   createContact,
   getContacts,
   getContact,
+  getContactStats,
   updateContact,
   deleteContact
 } = require('../controllers/contactController');
 const { validate } = require('../middleware/validation');
+const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -28,25 +30,21 @@ const contactValidation = [
     .withMessage('Please provide a valid email address'),
   
   body('phone')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty()
-    .withMessage('Phone number is required')
-    .matches(/^[\d\s\+\-\(\)]+$/)
+    .matches(/^[\d\s+\-()]+$/)
     .withMessage('Please provide a valid phone number'),
-  
+
   body('organizationName')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty()
-    .withMessage('Organization name is required')
     .isLength({ max: 200 })
     .withMessage('Organization name cannot be more than 200 characters'),
-  
+
   body('budgetRange')
-    .notEmpty()
-    .withMessage('Budget range is required')
+    .optional({ checkFalsy: true })
     .trim(),
-    // Removed enum validation - accepts any budget range format
-  
+
   body('projectDetails')
     .trim()
     .notEmpty()
@@ -62,16 +60,20 @@ const updateContactValidation = [
 ];
 
 // Routes
+// Public: form submission. Admin (protected): everything else.
+// NOTE: /stats must be declared before /:id so it isn't captured as an id.
+router.get('/stats', protect, getContactStats);
+
 router
   .route('/')
-  .get(getContacts)
+  .get(protect, getContacts)
   .post(contactValidation, validate, createContact);
 
 router
   .route('/:id')
-  .get(getContact)
-  .put(updateContactValidation, validate, updateContact)
-  .delete(deleteContact);
+  .get(protect, getContact)
+  .put(protect, updateContactValidation, validate, updateContact)
+  .delete(protect, deleteContact);
 
 module.exports = router;
 

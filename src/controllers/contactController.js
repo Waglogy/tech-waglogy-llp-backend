@@ -63,9 +63,31 @@ exports.getContacts = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    Contact submission stats (totals + counts by status)
+ * @route   GET /api/v1/contacts/stats
+ * @access  Private (admin)
+ */
+exports.getContactStats = asyncHandler(async (req, res) => {
+  const [total, byStatus] = await Promise.all([
+    Contact.countDocuments(),
+    Contact.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }])
+  ]);
+
+  const statuses = byStatus.reduce((acc, s) => {
+    acc[s._id] = s.count;
+    return acc;
+  }, {});
+
+  res.status(200).json({
+    status: 'success',
+    data: { total, statuses }
+  });
+});
+
+/**
  * @desc    Get single contact
  * @route   GET /api/v1/contacts/:id
- * @access  Public (you can protect this later)
+ * @access  Private (admin)
  */
 exports.getContact = asyncHandler(async (req, res) => {
   const contact = await Contact.findById(req.params.id);

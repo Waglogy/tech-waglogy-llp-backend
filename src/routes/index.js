@@ -12,6 +12,7 @@ const himtoWaitlistRoutes = require('./himtoWaitlistRoutes');
 const projectRoutes = require('./projectRoutes');
 const uploadRoutes = require('./uploadRoutes');
 const insightRoutes = require('./insightRoutes');
+const subscriberRoutes = require('./subscriberRoutes');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -24,6 +25,7 @@ router.use('/himto-waitlist', himtoWaitlistRoutes);
 router.use('/projects', projectRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/insights', insightRoutes);
+router.use('/subscribers', subscriberRoutes);
 
 module.exports = router;
 
