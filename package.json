@@ -8,7 +8,8 @@
     "dev": "nodemon src/server.js",
     "test": "jest --coverage --passWithNoTests",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "backfill:alt": "node src/scripts/backfillImageAlt.js"
   },
   "keywords": [
     "express",

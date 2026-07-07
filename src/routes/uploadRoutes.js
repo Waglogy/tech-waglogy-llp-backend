@@ -20,19 +20,21 @@ const upload = multer({
   },
 });
 
-function streamUpload(buffer, folder) {
+function streamUpload(buffer, folder, alt) {
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        folder: `waglogy/${folder}`,
-        resource_type: 'image',
-        transformation: [{ quality: 'auto', fetch_format: 'auto' }],
-      },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }
-    );
+    const options = {
+      folder: `waglogy/${folder}`,
+      resource_type: 'image',
+      transformation: [{ quality: 'auto', fetch_format: 'auto' }],
+    };
+    // Persist alt text on the Cloudinary asset itself for accessibility/SEO
+    if (alt) {
+      options.context = { alt, caption: alt };
+    }
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) reject(error);
+      else resolve(result);
+    });
     streamifier.createReadStream(buffer).pipe(stream);
   });
 }
@@ -55,7 +57,8 @@ router.post(
     }
 
     const folder = req.body.folder || 'projects';
-    const result = await streamUpload(req.file.buffer, folder);
+    const alt = (req.body.alt || '').trim();
+    const result = await streamUpload(req.file.buffer, folder, alt);
 
     res.status(200).json({
       status: 'success',
@@ -64,6 +67,7 @@ router.post(
         publicId: result.public_id,
         width: result.width,
         height: result.height,
+        alt,
       },
     });
   })
@@ -87,17 +91,31 @@ router.post(
     }
 
     const folder = req.body.folder || 'projects';
+
+    // Accept per-image alt text: `alts` as a repeated field or a JSON array,
+    // aligned by index with the uploaded files.
+    let alts = req.body.alts || [];
+    if (typeof alts === 'string') {
+      try {
+        const parsed = JSON.parse(alts);
+        alts = Array.isArray(parsed) ? parsed : [alts];
+      } catch {
+        alts = [alts];
+      }
+    }
+
     const uploads = await Promise.all(
-      req.files.map((file) => streamUpload(file.buffer, folder))
+      req.files.map((file, i) => streamUpload(file.buffer, folder, (alts[i] || '').trim()))
     );
 
     res.status(200).json({
       status: 'success',
-      data: uploads.map((r) => ({
+      data: uploads.map((r, i) => ({
         url: r.secure_url,
         publicId: r.public_id,
         width: r.width,
         height: r.height,
+        alt: (alts[i] || '').trim(),
       })),
     });
   })

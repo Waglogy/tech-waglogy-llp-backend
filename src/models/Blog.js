@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { resolveAlt, blogAlt } = require('../utils/altText');
 
 const BlogSchema = new mongoose.Schema({
   title: {
@@ -40,6 +41,11 @@ const BlogSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  imageAlt: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Image alt text cannot be more than 200 characters']
+  },
   isPublished: {
     type: Boolean,
     default: true
@@ -61,7 +67,14 @@ const BlogSchema = new mongoose.Schema({
     ref: 'User'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Guaranteed alt text for the blog image: explicit imageAlt or generated fallback
+BlogSchema.virtual('imageAltText').get(function() {
+  return resolveAlt(this.imageAlt, blogAlt(this));
 });
 
 // Helper function to strip HTML tags for read time calculation

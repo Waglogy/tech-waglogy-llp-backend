@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { resolveAlt, insightAlt } = require('../utils/altText');
 
 const InsightSchema = new mongoose.Schema({
   title: {
@@ -36,9 +37,19 @@ const InsightSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  imageAlt: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Image alt text cannot be more than 200 characters']
+  },
   heroImage: {
     type: String,
     trim: true
+  },
+  heroImageAlt: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Hero image alt text cannot be more than 200 characters']
   },
   featured: {
     type: Boolean,
@@ -70,7 +81,18 @@ const InsightSchema = new mongoose.Schema({
     ref: 'User'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Guaranteed alt text: explicit *Alt fields or generated SEO fallbacks
+InsightSchema.virtual('imageAltText').get(function() {
+  return resolveAlt(this.imageAlt, insightAlt(this, 'image'));
+});
+
+InsightSchema.virtual('heroImageAltText').get(function() {
+  return resolveAlt(this.heroImageAlt, insightAlt(this, 'hero'));
 });
 
 // Auto-generate slug from title

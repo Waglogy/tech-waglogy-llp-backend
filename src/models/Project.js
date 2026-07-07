@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { resolveAlt, projectAlt } = require('../utils/altText');
 
 const ProjectSchema = new mongoose.Schema({
   title: {
@@ -38,6 +39,11 @@ const ProjectSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  imageAlt: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Image alt text cannot be more than 200 characters']
+  },
   color: {
     type: String,
     enum: ['primary', 'accent'],
@@ -46,6 +52,11 @@ const ProjectSchema = new mongoose.Schema({
   heroImage: {
     type: String,
     trim: true
+  },
+  heroImageAlt: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Hero image alt text cannot be more than 200 characters']
   },
   client: {
     type: String,
@@ -113,7 +124,27 @@ const ProjectSchema = new mongoose.Schema({
     ref: 'User'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Guaranteed alt text: explicit *Alt fields or generated SEO fallbacks
+ProjectSchema.virtual('imageAltText').get(function() {
+  return resolveAlt(this.imageAlt, projectAlt(this, 'image'));
+});
+
+ProjectSchema.virtual('heroImageAltText').get(function() {
+  return resolveAlt(this.heroImageAlt, projectAlt(this, 'hero'));
+});
+
+// Gallery images paired with generated alt text: [{ url, alt }, ...]
+ProjectSchema.virtual('galleryImagesWithAlt').get(function() {
+  const gallery = Array.isArray(this.galleryImages) ? this.galleryImages : [];
+  return gallery.map((url, i) => ({
+    url,
+    alt: `${projectAlt(this, 'image')} — screenshot ${i + 1}`
+  }));
 });
 
 // Create slug from title before saving
