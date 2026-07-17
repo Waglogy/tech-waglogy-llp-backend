@@ -13,6 +13,7 @@ const projectRoutes = require('./projectRoutes');
 const uploadRoutes = require('./uploadRoutes');
 const insightRoutes = require('./insightRoutes');
 const subscriberRoutes = require('./subscriberRoutes');
+const financeRoutes = require('./financeRoutes');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -26,6 +27,7 @@ router.use('/projects', projectRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/insights', insightRoutes);
 router.use('/subscribers', subscriberRoutes);
+router.use('/finance', financeRoutes);
 
 module.exports = router;
 

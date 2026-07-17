@@ -1,17 +1,40 @@
 const mongoose = require('mongoose');
 
+/**
+ * A registered domain the client owns/manages through us.
+ * expiresOn drives renewal reminders.
+ */
+const DomainSchema = new mongoose.Schema({
+  name: { type: String, trim: true, maxlength: 253 },      // example.com
+  registrar: { type: String, trim: true, maxlength: 100 }, // GoDaddy, Namecheap...
+  registeredOn: { type: Date },
+  expiresOn: { type: Date },
+  autoRenew: { type: Boolean, default: false }
+}, { _id: true });
+
+/**
+ * A hosting/infrastructure subscription for the client.
+ */
+const HostingSchema = new mongoose.Schema({
+  provider: { type: String, trim: true, maxlength: 100 },  // AWS, Hostinger, Vercel...
+  plan: { type: String, trim: true, maxlength: 100 },
+  startedOn: { type: Date },
+  expiresOn: { type: Date },
+  autoRenew: { type: Boolean, default: false }
+}, { _id: true });
+
 const ClientSchema = new mongoose.Schema({
-  company: {
+  // --- Identity ---
+  name: {
     type: String,
-    required: [true, 'Please provide company name'],
+    required: [true, 'Please provide the client / company name'],
     trim: true,
-    maxlength: [200, 'Company name cannot be more than 200 characters']
+    maxlength: [200, 'Name cannot be more than 200 characters']
   },
   contactPerson: {
     type: String,
-    required: [true, 'Please provide contact person name'],
     trim: true,
-    maxlength: [100, 'Contact person name cannot be more than 100 characters']
+    maxlength: [100, 'Contact person cannot be more than 100 characters']
   },
   email: {
     type: String,
@@ -27,71 +50,84 @@ const ClientSchema = new mongoose.Schema({
     trim: true,
     maxlength: [20, 'Phone number cannot be more than 20 characters']
   },
-  service: {
+  address: {
     type: String,
-    required: [true, 'Please provide service type'],
     trim: true,
-    maxlength: [200, 'Service cannot be more than 200 characters']
+    maxlength: [500, 'Address cannot be more than 500 characters']
+  },
+
+  // --- Engagement ---
+  // Services can be chosen from our preset list or added as custom strings.
+  services: {
+    type: [String],
+    default: []
+  },
+  projectName: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Project name cannot be more than 200 characters']
+  },
+  projectDetails: {
+    type: String,
+    trim: true,
+    maxlength: [3000, 'Project details cannot be more than 3000 characters']
+  },
+
+  // --- Assets we manage (renewal tracking) ---
+  domains: { type: [DomainSchema], default: [] },
+  hosting: { type: [HostingSchema], default: [] },
+
+  // --- Commercials ---
+  revenue: {
+    type: Number,
+    min: [0, 'Revenue cannot be negative'],
+    default: 0
   },
   startDate: {
     type: Date,
-    required: [true, 'Please provide start date'],
     default: Date.now
   },
   endDate: {
     type: Date
   },
-  revenue: {
-    type: Number,
-    required: [true, 'Please provide revenue amount'],
-    min: [0, 'Revenue cannot be negative'],
-    default: 0
-  },
+
+  // --- Status & meta ---
   status: {
     type: String,
-    required: true,
     enum: {
       values: ['active', 'inactive', 'pending', 'completed', 'on-hold', 'cancelled'],
       message: '{VALUE} is not a valid status'
     },
     default: 'active'
   },
-  address: {
-    type: String,
-    trim: true,
-    maxlength: [500, 'Address cannot be more than 500 characters']
-  },
   notes: {
     type: String,
     trim: true,
-    maxlength: [1000, 'Notes cannot be more than 1000 characters']
+    maxlength: [2000, 'Notes cannot be more than 2000 characters']
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-// Create indexes for faster queries
-ClientSchema.index({ company: 1 });
-ClientSchema.index({ contactPerson: 1 });
+ClientSchema.index({ name: 1 });
 ClientSchema.index({ status: 1 });
 ClientSchema.index({ startDate: -1 });
-ClientSchema.index({ revenue: -1 });
+ClientSchema.index({ 'domains.expiresOn': 1 });
+ClientSchema.index({ 'hosting.expiresOn': 1 });
 
-// Virtual for client duration
-ClientSchema.virtual('duration').get(function() {
-  if (this.endDate) {
-    return Math.ceil((this.endDate - this.startDate) / (1000 * 60 * 60 * 24));
-  }
-  return Math.ceil((Date.now() - this.startDate) / (1000 * 60 * 60 * 24));
+// The soonest upcoming expiry across all domains + hosting (or null).
+ClientSchema.virtual('nextRenewal').get(function() {
+  const dates = [];
+  (this.domains || []).forEach((d) => { if (d.expiresOn) dates.push(new Date(d.expiresOn)); });
+  (this.hosting || []).forEach((h) => { if (h.expiresOn) dates.push(new Date(h.expiresOn)); });
+  const sorted = dates.sort((a, b) => a - b);
+  return sorted.length ? sorted[0] : null;
 });
 
-// Ensure virtuals are included in JSON
-ClientSchema.set('toJSON', { virtuals: true });
-ClientSchema.set('toObject', { virtuals: true });
-
 module.exports = mongoose.model('Client', ClientSchema);
-

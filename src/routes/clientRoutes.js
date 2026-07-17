@@ -7,159 +7,51 @@ const {
   updateClient,
   deleteClient,
   getClientStats,
-  searchClients
+  searchClients,
+  getUpcomingRenewals
 } = require('../controllers/clientController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
 
 const router = express.Router();
 
-// Validation rules
-const createClientValidation = [
-  body('company')
-    .trim()
-    .notEmpty()
-    .withMessage('Company name is required')
-    .isLength({ max: 200 })
-    .withMessage('Company name cannot exceed 200 characters'),
-  body('contactPerson')
-    .trim()
-    .notEmpty()
-    .withMessage('Contact person name is required')
-    .isLength({ max: 100 })
-    .withMessage('Contact person name cannot exceed 100 characters'),
-  body('email')
-    .optional()
-    .trim()
-    .isEmail()
-    .withMessage('Please provide a valid email'),
-  body('phone')
-    .optional()
-    .trim()
-    .isLength({ max: 20 })
-    .withMessage('Phone number cannot exceed 20 characters'),
-  body('service')
-    .trim()
-    .notEmpty()
-    .withMessage('Service is required')
-    .isLength({ max: 200 })
-    .withMessage('Service cannot exceed 200 characters'),
-  body('startDate')
-    .optional()
-    .isISO8601()
-    .withMessage('Please provide a valid start date'),
-  body('endDate')
-    .optional()
-    .isISO8601()
-    .withMessage('Please provide a valid end date'),
-  body('revenue')
-    .notEmpty()
-    .withMessage('Revenue is required')
-    .isNumeric()
-    .withMessage('Revenue must be a number')
-    .isFloat({ min: 0 })
-    .withMessage('Revenue cannot be negative'),
-  body('status')
-    .optional()
-    .isIn(['active', 'inactive', 'pending', 'completed', 'on-hold', 'cancelled'])
-    .withMessage('Invalid status'),
-  body('address')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Address cannot exceed 500 characters'),
-  body('notes')
-    .optional()
-    .trim()
-    .isLength({ max: 1000 })
-    .withMessage('Notes cannot exceed 1000 characters')
+// Shared field validators (used for create & update; `required` toggles the name check).
+const clientFields = (required) => [
+  required
+    ? body('name').trim().notEmpty().withMessage('Client name is required').isLength({ max: 200 }).withMessage('Name cannot exceed 200 characters')
+    : body('name').optional().trim().notEmpty().withMessage('Name cannot be empty').isLength({ max: 200 }).withMessage('Name cannot exceed 200 characters'),
+  body('contactPerson').optional().trim().isLength({ max: 100 }).withMessage('Contact person cannot exceed 100 characters'),
+  body('email').optional({ checkFalsy: true }).trim().isEmail().withMessage('Please provide a valid email'),
+  body('phone').optional().trim().isLength({ max: 20 }).withMessage('Phone number cannot exceed 20 characters'),
+  body('address').optional().trim().isLength({ max: 500 }).withMessage('Address cannot exceed 500 characters'),
+  body('services').optional().isArray().withMessage('Services must be an array'),
+  body('projectName').optional().trim().isLength({ max: 200 }).withMessage('Project name cannot exceed 200 characters'),
+  body('projectDetails').optional().trim().isLength({ max: 3000 }).withMessage('Project details cannot exceed 3000 characters'),
+  body('domains').optional().isArray().withMessage('Domains must be an array'),
+  body('hosting').optional().isArray().withMessage('Hosting must be an array'),
+  body('revenue').optional().isNumeric().withMessage('Revenue must be a number').isFloat({ min: 0 }).withMessage('Revenue cannot be negative'),
+  body('startDate').optional({ checkFalsy: true }).isISO8601().withMessage('Please provide a valid start date'),
+  body('endDate').optional({ checkFalsy: true }).isISO8601().withMessage('Please provide a valid end date'),
+  body('status').optional().isIn(['active', 'inactive', 'pending', 'completed', 'on-hold', 'cancelled']).withMessage('Invalid status'),
+  body('notes').optional().trim().isLength({ max: 2000 }).withMessage('Notes cannot exceed 2000 characters')
 ];
 
-const updateClientValidation = [
-  body('company')
-    .optional()
-    .trim()
-    .notEmpty()
-    .withMessage('Company name cannot be empty')
-    .isLength({ max: 200 })
-    .withMessage('Company name cannot exceed 200 characters'),
-  body('contactPerson')
-    .optional()
-    .trim()
-    .notEmpty()
-    .withMessage('Contact person name cannot be empty')
-    .isLength({ max: 100 })
-    .withMessage('Contact person name cannot exceed 100 characters'),
-  body('email')
-    .optional()
-    .trim()
-    .isEmail()
-    .withMessage('Please provide a valid email'),
-  body('phone')
-    .optional()
-    .trim()
-    .isLength({ max: 20 })
-    .withMessage('Phone number cannot exceed 20 characters'),
-  body('service')
-    .optional()
-    .trim()
-    .notEmpty()
-    .withMessage('Service cannot be empty')
-    .isLength({ max: 200 })
-    .withMessage('Service cannot exceed 200 characters'),
-  body('startDate')
-    .optional()
-    .isISO8601()
-    .withMessage('Please provide a valid start date'),
-  body('endDate')
-    .optional()
-    .isISO8601()
-    .withMessage('Please provide a valid end date'),
-  body('revenue')
-    .optional()
-    .isNumeric()
-    .withMessage('Revenue must be a number')
-    .isFloat({ min: 0 })
-    .withMessage('Revenue cannot be negative'),
-  body('status')
-    .optional()
-    .isIn(['active', 'inactive', 'pending', 'completed', 'on-hold', 'cancelled'])
-    .withMessage('Invalid status'),
-  body('address')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Address cannot exceed 500 characters'),
-  body('notes')
-    .optional()
-    .trim()
-    .isLength({ max: 1000 })
-    .withMessage('Notes cannot exceed 1000 characters')
-];
-
-// All routes require authentication and admin role
+// All routes require authentication.
 router.use(protect);
-router.use(authorize('admin'));
 
-// Routes
 router
   .route('/')
-  .post(createClientValidation, validate, createClient)
+  .post(clientFields(true), validate, createClient)
   .get(getAllClients);
 
-router
-  .route('/stats/summary')
-  .get(getClientStats);
-
-router
-  .route('/search')
-  .get(searchClients);
+router.get('/stats/summary', getClientStats);
+router.get('/search', searchClients);
+router.get('/renewals', getUpcomingRenewals);
 
 router
   .route('/:id')
   .get(getClient)
-  .put(updateClientValidation, validate, updateClient)
+  .put(clientFields(false), validate, updateClient)
   .delete(deleteClient);
 
 module.exports = router;
-
