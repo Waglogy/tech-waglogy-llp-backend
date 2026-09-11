@@ -46,6 +46,11 @@ const ContactSchema = new mongoose.Schema({
     enum: ['new', 'in-progress', 'contacted', 'qualified', 'closed'],
     default: 'new'
   },
+  attribution: {
+    landingPage: { type: String, maxlength: 500 },
+    submissionPage: { type: String, maxlength: 500 },
+    referrerHost: { type: String, maxlength: 255 }
+  },
   ipAddress: {
     type: String
   }

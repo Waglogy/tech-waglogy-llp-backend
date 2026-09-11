@@ -17,6 +17,7 @@ exports.createContact = asyncHandler(async (req, res) => {
     organizationName: req.body.organizationName,
     budgetRange: req.body.budgetRange,
     projectDetails: req.body.projectDetails,
+    attribution: req.body.attribution,
     ipAddress
   });
 

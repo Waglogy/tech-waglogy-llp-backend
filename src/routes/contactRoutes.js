@@ -15,6 +15,10 @@ const router = express.Router();
 
 // Validation rules
 const contactValidation = [
+  body('attribution').optional().isObject(),
+  body('attribution.landingPage').optional().isString().isLength({ max: 500 }).matches(/^\/(?!\/)[^?#]*$/),
+  body('attribution.submissionPage').optional().isString().isLength({ max: 500 }).matches(/^\/(?!\/)[^?#]*$/),
+  body('attribution.referrerHost').optional().isString().isLength({ max: 255 }).matches(/^[a-zA-Z0-9.-]*$/),
   body('fullName')
     .trim()
     .notEmpty()
