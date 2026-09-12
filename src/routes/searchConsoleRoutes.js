@@ -13,7 +13,7 @@ router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); 
 router.get('/', asyncHandler(async (_req, res) => {
   const reports = await Report.find().select('-daily -queries -pages -countries -devices -importedBy').sort('-createdAt').limit(100).lean();
   const { daily, queries, pages, countries, devices, ...summary } = baseline;
-  res.json({ data: [...reports, ...(reports.some(r => r.fingerprint === baseline.fingerprint) ? [] : [summary])] });
+  res.json({ data: [...reports, ...(reports.some(r => r.fingerprint === baseline.fingerprint) ? [] : [{ ...summary, isBaseline: true }])] });
 }));
 router.get('/:id', asyncHandler(async (req, res) => {
   if (req.params.id === 'baseline') return res.json({ data: baseline });
