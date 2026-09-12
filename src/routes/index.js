@@ -17,6 +17,7 @@ const financeRoutes = require('./financeRoutes');
 const leadRoutes = require('./leadRoutes');
 const missionRoutes = require('./missionRoutes');
 const taskRoutes = require('./taskRoutes');
+const searchConsoleRoutes = require('./searchConsoleRoutes');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -34,6 +35,7 @@ router.use('/finance', financeRoutes);
 router.use('/leads', leadRoutes);
 router.use('/missions', missionRoutes);
 router.use('/tasks', taskRoutes);
+router.use('/search-console', searchConsoleRoutes);
 
 module.exports = router;
 
